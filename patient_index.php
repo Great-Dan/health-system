@@ -147,7 +147,7 @@ Patient Portal
 
 <link
     rel="stylesheet"
-    href="style.css"
+    href="style.css?v=20261014"
 >
 
 </head>
@@ -186,133 +186,147 @@ Logout
 
 <main class="wide">
 
-
-<h2>
-My Profile
-</h2>
-
-
-<div class="panel">
-
-<p>
-
-<strong>
-Date of Birth:
-</strong>
-
-<?= e(
-
-$patient['date_of_birth']
-?? ''
-
-) ?>
-
-</p>
-
-
-<p>
-
-<strong>
-Name:
-</strong>
-
-<?= e(
-
-$patient['full_name']
-?? $_SESSION['full_name']
-
-) ?>
-
-</p>
-
-
-<p>
-
-<strong>
-Email:
-</strong>
-
-<?= e(
-
-$patient['email']
-?? ''
-
-) ?>
-
-</p>
-
-
-<p>
-
-<strong>
-Phone:
-</strong>
-
-<?= e(
-
-$patient['phone']
-?? ''
-
-) ?>
-
-</p>
-
-
-<p>
-
-<strong>
-Address:
-</strong>
-
-<?= e(
-
-$patient['address']
-?? ''
-
-) ?>
-
-</p>
-
-
-<p>
-
-<strong>
-Emergency Contact:
-</strong>
-
-<?= e(
-
-$patient['emergency_contact']
-?? ''
-
-) ?>
-
-</p>
-
-</div>
-
-
-<h2>
-My Invoices
-</h2>
-
-
-<div class="grid">
-    <div class="panel">
-        <strong>Amount Paid</strong><br>
-        GHS <?= number_format($amountPaid, 2) ?>
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">PATIENT PORTAL</p>
+        <h1>Hello, <?= e($_SESSION['full_name']) ?></h1>
+        <p>Your profile, invoices and current account balance.</p>
     </div>
-    <div class="panel">
-        <strong>Balance Left to Pay</strong><br>
-        GHS <?= number_format($balanceRemaining, 2) ?>
+    <span class="page-badge">PATIENT</span>
+</header>
+
+<div class="dashboard-layout dashboard-layout--patient">
+
+    <div>
+        <h2>
+        My Profile
+        </h2>
+
+        <div class="panel profile-details">
+
+        <p>
+
+        <strong>
+        Date of Birth:
+        </strong>
+
+        <?= e(
+
+        $patient['date_of_birth']
+        ?? ''
+
+        ) ?>
+
+        </p>
+
+
+        <p>
+
+        <strong>
+        Name:
+        </strong>
+
+        <?= e(
+
+        $patient['full_name']
+        ?? $_SESSION['full_name']
+
+        ) ?>
+
+        </p>
+
+
+        <p>
+
+        <strong>
+        Email:
+        </strong>
+
+        <?= e(
+
+        $patient['email']
+        ?? ''
+
+        ) ?>
+
+        </p>
+
+
+        <p>
+
+        <strong>
+        Phone:
+        </strong>
+
+        <?= e(
+
+        $patient['phone']
+        ?? ''
+
+        ) ?>
+
+        </p>
+
+
+        <p>
+
+        <strong>
+        Address:
+        </strong>
+
+        <?= e(
+
+        $patient['address']
+        ?? ''
+
+        ) ?>
+
+        </p>
+
+
+        <p>
+
+        <strong>
+        Emergency Contact:
+        </strong>
+
+        <?= e(
+
+        $patient['emergency_contact']
+        ?? ''
+
+        ) ?>
+
+        </p>
+
+        </div>
+    </div>
+
+    <div class="dashboard-stack">
+        <div>
+            <h2>
+            My Invoices
+            </h2>
+
+            <div class="grid">
+                <div class="panel">
+                    <strong>Amount Paid</strong><br>
+                    GHS <?= number_format($amountPaid, 2) ?>
+                </div>
+                <div class="panel">
+                    <strong>Balance Left to Pay</strong><br>
+                    GHS <?= number_format($balanceRemaining, 2) ?>
+                </div>
+            </div>
+        </div>
+
+        <?php if ($balanceRemaining > 0): ?>
+        <div class="alert warning">
+            You have an outstanding balance of GHS <?= number_format($balanceRemaining, 2) ?>. Please contact the accounts office to arrange payment.
+        </div>
+        <?php endif; ?>
     </div>
 </div>
-
-<?php if ($balanceRemaining > 0): ?>
-<div class="alert warning">
-    You have an outstanding balance of GHS <?= number_format($balanceRemaining, 2) ?>. Please contact the accounts office to arrange payment.
-</div>
-<?php endif; ?>
 
 
 <table>

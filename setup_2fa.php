@@ -245,7 +245,7 @@ $uri = totp_uri(
 
 <link
     rel="stylesheet"
-    href="style.css"
+    href="style.css?v=20261012"
 >
 
 </head>

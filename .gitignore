@@ -1,0 +1,22 @@
+# Cloudflare / cloud backup credentials and generated encrypted archives
+*service-account*.json
+*client_secret*.json
+*credentials*.json
+*.tar.gz.enc
+
+# Local and production secrets
+config.php
+/system_config.json
+/admin_setup.php
+.env
+.env.*
+*.pem
+*.key
+
+# Database exports may contain personal and authentication data
+/secure_health_system.sql
+
+# Local backup and runtime data
+/backups/
+/storage/
+*.log

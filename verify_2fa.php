@@ -201,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <link
     rel="stylesheet"
-    href="style.css"
+    href="style.css?v=20261012"
 >
 
 </head>

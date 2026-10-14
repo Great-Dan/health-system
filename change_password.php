@@ -49,10 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Change Password</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20261012">
 </head>
 <body class="auth-page">
-<main class="card auth-card">
+<main class="card auth-card auth-narrow">
     <a class="brand-mark" href="dashboard.php" aria-label="Return to dashboard">SH</a>
     <p class="eyebrow">ACCOUNT SETTINGS</p>
     <h1>Change Password</h1>
@@ -77,10 +77,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="confirm_password">Confirm new password</label>
         <input id="confirm_password" name="confirm_password" type="password" minlength="12" required autocomplete="new-password">
 
+        <button type="button" class="password-visibility-toggle" aria-label="Show passwords" aria-pressed="false" title="Show passwords" data-targets="current_password,new_password,confirm_password">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+                <path class="password-eye-slash" d="m4 4 16 16"></path>
+            </svg>
+        </button>
+
         <button type="submit">Update password</button>
     </form>
 
     <p><a href="dashboard.php">Return to dashboard</a></p>
 </main>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.password-visibility-toggle').forEach(function (toggle) {
+            toggle.addEventListener('click', function () {
+                const targetIds = (toggle.dataset.targets || '').split(',').map(function (id) {
+                    return id.trim();
+                }).filter(Boolean);
+
+                const shouldShow = toggle.getAttribute('aria-pressed') !== 'true';
+
+                targetIds.forEach(function (id) {
+                    const field = document.getElementById(id);
+                    if (!field) return;
+                    field.type = shouldShow ? 'text' : 'password';
+                });
+
+                toggle.setAttribute('aria-pressed', String(shouldShow));
+                toggle.setAttribute('aria-label', shouldShow ? 'Hide passwords' : 'Show passwords');
+                toggle.setAttribute('title', shouldShow ? 'Hide passwords' : 'Show passwords');
+            });
+        });
+    });
+</script>
 </body>
 </html>

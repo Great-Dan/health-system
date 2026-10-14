@@ -12,11 +12,15 @@ $paymentError = $_SESSION['payment_error'] ?? '';
 $paymentNotice = $_SESSION['payment_notice'] ?? '';
 $invoiceError = $_SESSION['invoice_error'] ?? '';
 $invoiceNotice = $_SESSION['invoice_notice'] ?? '';
+$balanceError = $_SESSION['balance_error'] ?? '';
+$balanceNotice = $_SESSION['balance_notice'] ?? '';
 unset(
     $_SESSION['payment_error'],
     $_SESSION['payment_notice'],
     $_SESSION['invoice_error'],
-    $_SESSION['invoice_notice']
+    $_SESSION['invoice_notice'],
+    $_SESSION['balance_error'],
+    $_SESSION['balance_notice']
 );
 
 
@@ -90,6 +94,23 @@ $patientsWithBalances = db()->query(
      ORDER BY balance DESC, u.full_name"
 )->fetchAll();
 
+$balanceAdjustments = db()->query(
+    "SELECT
+        adjustment.previous_amount,
+        adjustment.new_amount,
+        adjustment.invoice_id,
+        adjustment.reason,
+        adjustment.created_at,
+        patient.full_name AS patient,
+        recorder.full_name AS recorded_by
+     FROM invoice_balance_adjustments adjustment
+     JOIN patients patient_profile ON patient_profile.id = adjustment.patient_id
+     JOIN users patient ON patient.id = patient_profile.user_id
+     LEFT JOIN users recorder ON recorder.id = adjustment.recorded_by
+     ORDER BY adjustment.created_at DESC, adjustment.id DESC
+     LIMIT 25"
+)->fetchAll();
+
 $patientOptions = db()->query(
     "SELECT p.id, u.full_name
      FROM patients p
@@ -119,7 +140,7 @@ Accountant Dashboard
 
 <link
     rel="stylesheet"
-    href="style.css"
+    href="style.css?v=20261014"
 >
 
 </head>
@@ -173,6 +194,23 @@ Logout
 <?php if ($invoiceNotice): ?>
 <div class="alert info"><?= e($invoiceNotice) ?></div>
 <?php endif; ?>
+
+<?php if ($balanceError): ?>
+<div class="alert error"><?= e($balanceError) ?></div>
+<?php endif; ?>
+
+<?php if ($balanceNotice): ?>
+<div class="alert info"><?= e($balanceNotice) ?></div>
+<?php endif; ?>
+
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">FINANCIAL OPERATIONS</p>
+        <h1>Accounts dashboard</h1>
+        <p>Billing, recorded receipts and balances awaiting payment.</p>
+    </div>
+    <span class="page-badge">ACCOUNTANT</span>
+</header>
 
 
 <h2>
@@ -266,32 +304,67 @@ GHS
 </div>
 
 
-<h2>Add Amount Due</h2>
-<form method="POST" action="create_invoice.php" class="panel form-grid">
-    <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
+<div class="dashboard-layout dashboard-layout--accountant">
     <div>
-        <label for="invoice_patient_accountant">Patient</label>
-        <select id="invoice_patient_accountant" name="patient_id" required <?= $patientOptions ? '' : 'disabled' ?>>
-            <?php if (!$patientOptions): ?>
-                <option value="">No active patient accounts</option>
-            <?php else: ?>
-                <option value="">Choose a patient</option>
-                <?php foreach ($patientOptions as $patientOption): ?>
-                    <option value="<?= e((string)$patientOption['id']) ?>"><?= e($patientOption['full_name']) ?></option>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </select>
+        <h2>Add a Charge</h2>
+        <form method="POST" action="create_invoice.php" class="panel form-grid">
+            <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
+            <div>
+                <label for="invoice_patient_accountant">Patient</label>
+                <select id="invoice_patient_accountant" name="patient_id" required <?= $patientOptions ? '' : 'disabled' ?>>
+                    <?php if (!$patientOptions): ?>
+                        <option value="">No active patient accounts</option>
+                    <?php else: ?>
+                        <option value="">Choose a patient</option>
+                        <?php foreach ($patientOptions as $patientOption): ?>
+                            <option value="<?= e((string)$patientOption['id']) ?>"><?= e($patientOption['full_name']) ?></option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+            <div>
+                <label for="invoice_amount_accountant">Charge amount (GHS)</label>
+                <input id="invoice_amount_accountant" type="number" name="amount" min="0.01" step="0.01" required>
+            </div>
+            <div class="span-all">
+                <label for="invoice_description_accountant">Description</label>
+                <input id="invoice_description_accountant" name="description" maxlength="255" required>
+            </div>
+            <button type="submit" <?= $patientOptions ? '' : 'disabled' ?>>Add charge</button>
+        </form>
+        <p class="muted small">Adds a new charge to the patient's existing outstanding balance.</p>
     </div>
+
     <div>
-        <label for="invoice_amount_accountant">Amount due (GHS)</label>
-        <input id="invoice_amount_accountant" type="number" name="amount" min="0.01" step="0.01" required>
+        <h2>Set Total Outstanding Balance</h2>
+        <form method="POST" action="set_patient_balance.php" class="panel form-grid">
+            <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
+            <div>
+                <label for="balance_patient_accountant">Patient</label>
+                <select id="balance_patient_accountant" name="patient_id" required <?= $patientOptions ? '' : 'disabled' ?>>
+                    <?php if (!$patientOptions): ?>
+                        <option value="">No active patient accounts</option>
+                    <?php else: ?>
+                        <option value="">Choose a patient</option>
+                        <?php foreach ($patientOptions as $patientOption): ?>
+                            <option value="<?= e((string)$patientOption['id']) ?>"><?= e($patientOption['full_name']) ?></option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+            <div>
+                <label for="patient_balance_accountant">New total outstanding balance (GHS)</label>
+                <input id="patient_balance_accountant" type="number" name="balance" min="0" step="0.01" required>
+            </div>
+            <div class="span-all">
+                <label for="balance_reason_accountant">Reason for adjustment</label>
+                <input id="balance_reason_accountant" name="reason" maxlength="220" required>
+            </div>
+            <button type="submit" <?= $patientOptions ? '' : 'disabled' ?>>Set total balance</button>
+        </form>
+        <p class="muted small">Sets the patient's total due to this amount. Changes to existing charges are recorded in the balance adjustment history; an increase adds a new charge.</p>
     </div>
-    <div class="span-all">
-        <label for="invoice_description_accountant">Description</label>
-        <input id="invoice_description_accountant" name="description" maxlength="255" required>
-    </div>
-    <button type="submit" <?= $patientOptions ? '' : 'disabled' ?>>Add amount due</button>
-</form>
+</div>
 
 
 <h2>Outstanding Patient Balances</h2>
@@ -326,6 +399,29 @@ $reminderLink = 'mailto:' . $patient['email']
 
 <p class="muted small">Prepare email opens the user's mail application; the accountant reviews and sends the reminder.</p>
 
+<h2>Recent Invoice Adjustments</h2>
+<table>
+<tr>
+    <th>Date</th>
+    <th>Patient</th>
+    <th>Invoice #</th>
+    <th>Previous Invoice Amount</th>
+    <th>Adjusted Invoice Amount</th>
+    <th>Reason</th>
+    <th>Recorded By</th>
+</tr>
+<?php foreach ($balanceAdjustments as $adjustment): ?>
+<tr>
+    <td><?= e($adjustment['created_at']) ?></td>
+    <td><?= e($adjustment['patient']) ?></td>
+    <td><?= e((string)($adjustment['invoice_id'] ?? 'Deleted')) ?></td>
+    <td>GHS <?= number_format((float)$adjustment['previous_amount'], 2) ?></td>
+    <td>GHS <?= number_format((float)$adjustment['new_amount'], 2) ?></td>
+    <td><?= e($adjustment['reason']) ?></td>
+    <td><?= e($adjustment['recorded_by'] ?? 'Account unavailable') ?></td>
+</tr>
+<?php endforeach; ?>
+</table>
 
 <h2>
 Invoices

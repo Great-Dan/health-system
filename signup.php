@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Create Patient Account</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20261012">
 </head>
 <body class="auth-page">
 <main class="card auth-card">
@@ -152,11 +152,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div>
             <label for="password">Password</label>
-            <input id="password" name="password" type="password" minlength="12" required autocomplete="new-password">
+            <div class="password-input-wrap">
+                <input id="password" name="password" type="password" minlength="12" required autocomplete="new-password">
+                <button type="button" class="password-visibility-toggle" aria-label="Show password" aria-pressed="false" title="Show password" data-targets="password">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path class="password-eye-slash" d="m4 4 16 16"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
         <div>
             <label for="password_confirmation">Confirm password</label>
-            <input id="password_confirmation" name="password_confirmation" type="password" minlength="12" required autocomplete="new-password">
+            <div class="password-input-wrap">
+                <input id="password_confirmation" name="password_confirmation" type="password" minlength="12" required autocomplete="new-password">
+                <button type="button" class="password-visibility-toggle" aria-label="Show confirmation password" aria-pressed="false" title="Show confirmation password" data-targets="password_confirmation">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path class="password-eye-slash" d="m4 4 16 16"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
         <div>
             <label for="date_of_birth">Date of birth <span class="muted">(optional)</span></label>
@@ -206,5 +224,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <p class="auth-switch">Already registered? <a href="login.php">Sign in</a></p>
 </main>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.password-visibility-toggle').forEach(function (toggle) {
+            toggle.addEventListener('click', function () {
+                const targetIds = (toggle.dataset.targets || '').split(',').map(function (id) {
+                    return id.trim();
+                }).filter(Boolean);
+
+                const shouldShow = toggle.getAttribute('aria-pressed') !== 'true';
+
+                targetIds.forEach(function (id) {
+                    const field = document.getElementById(id);
+                    if (!field) return;
+                    field.type = shouldShow ? 'text' : 'password';
+                });
+
+                toggle.setAttribute('aria-pressed', String(shouldShow));
+                const fieldLabel = toggle.dataset.targets === 'password_confirmation'
+                    ? 'confirmation password'
+                    : 'password';
+                toggle.setAttribute('aria-label', (shouldShow ? 'Hide ' : 'Show ') + fieldLabel);
+                toggle.setAttribute('title', (shouldShow ? 'Hide ' : 'Show ') + fieldLabel);
+            });
+        });
+    });
+</script>
 </body>
 </html>

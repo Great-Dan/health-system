@@ -1,0 +1,98 @@
+name: Deploy to live site
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type DEPLOY to upload application files to the live site
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-live-site
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out application source
+        uses: actions/checkout@v4
+
+      - name: Require explicit deployment confirmation
+        env:
+          DEPLOY_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [[ "$DEPLOY_CONFIRMATION" != "DEPLOY" ]]; then
+            echo "Type DEPLOY in the confirmation field to continue."
+            exit 1
+          fi
+
+      - name: Validate hosting secrets
+        env:
+          FTP_HOST: ${{ secrets.INFINITYFREE_FTP_HOST }}
+          FTP_USERNAME: ${{ secrets.INFINITYFREE_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.INFINITYFREE_FTP_PASSWORD }}
+          FTP_REMOTE_DIR: ${{ secrets.INFINITYFREE_FTP_REMOTE_DIR }}
+        run: |
+          set -euo pipefail
+          [[ -n "$FTP_HOST" && -n "$FTP_USERNAME" && -n "$FTP_PASSWORD" && -n "$FTP_REMOTE_DIR" ]] || {
+            echo "Configure the four INFINITYFREE_FTP_* repository secrets first."
+            exit 1
+          }
+          [[ "$FTP_HOST" =~ ^[A-Za-z0-9.-]+$ ]] || {
+            echo "FTP host must be a hostname only (no scheme, port, or path)."
+            exit 1
+          }
+          [[ "$FTP_REMOTE_DIR" =~ ^/[A-Za-z0-9._/-]+$ && "$FTP_REMOTE_DIR" != *..* ]] || {
+            echo "FTP remote directory must be an absolute path without '..'."
+            exit 1
+          }
+
+      - name: Prepare application-only upload
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/secure-health-deploy"
+          mkdir -m 700 "$stage"
+          while IFS= read -r -d '' file; do
+            cp -- "$file" "$stage/"
+          done < <(
+            find . -maxdepth 1 -type f \
+              \( -name '*.php' -o -name '*.css' -o -name '*.js' -o -name '.htaccess' \) \
+              ! -name 'config.php' \
+              ! -name 'admin_setup.php' \
+              -print0
+          )
+          test -f "$stage/login.php"
+          test -f "$stage/dashboard.php"
+          test -f "$stage/.htaccess"
+          if find "$stage" -type f \( -name '*.sql' -o -name 'config.php' \) | grep -q .; then
+            echo "Refusing to upload a database dump or local configuration."
+            exit 1
+          fi
+
+      - name: Upload application files over explicit FTPS
+        env:
+          FTP_HOST: ${{ secrets.INFINITYFREE_FTP_HOST }}
+          FTP_USERNAME: ${{ secrets.INFINITYFREE_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.INFINITYFREE_FTP_PASSWORD }}
+          FTP_REMOTE_DIR: ${{ secrets.INFINITYFREE_FTP_REMOTE_DIR }}
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/secure-health-deploy"
+          for file in "$stage"/*; do
+            name="$(basename "$file")"
+            echo "Uploading $name"
+            curl --fail --silent --show-error \
+              --ssl-reqd --ftp-create-dirs --ftp-pasv \
+              --connect-timeout 20 --max-time 180 --retry 2 \
+              --user "$FTP_USERNAME:$FTP_PASSWORD" \
+              --upload-file "$file" \
+              "ftp://$FTP_HOST$FTP_REMOTE_DIR/$name"
+          done
+          echo "Application files uploaded. Existing database records and config.php were not changed."

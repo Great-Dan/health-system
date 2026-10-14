@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ .
-    '/security.php';
+require_once __DIR__ . '/security.php';
+require_once __DIR__ . '/email_otp.php';
 
 if (!empty($_SESSION['user_id'])) {
 
@@ -17,7 +17,8 @@ $error = '';
 
 $info = '';
 $signupNotice = $_SESSION['signup_notice'] ?? '';
-unset($_SESSION['signup_notice']);
+$passwordResetNotice = $_SESSION['password_reset_notice'] ?? '';
+unset($_SESSION['signup_notice'], $_SESSION['password_reset_notice']);
 
 
 if (isset($_GET['expired'])) {
@@ -359,6 +360,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         */
 
         session_regenerate_id(true);
+        // Set OTP pending session variables
+        $_SESSION['otp_pending_user_id'] = (int)$user['id'];
+        $_SESSION['otp_pending_email']   = $user['email'] ?? '';
+        $_SESSION['otp_pending_name']    = $user['username'] ?? '';
+        $_SESSION['otp_user_data']       = $user;
+        $_SESSION['otp_attempts']        = 0;
+        // Generate and email OTP
+        $otp = generate_email_otp((int)$user['id'], db());
+        $mailed = send_otp_email($_SESSION['otp_pending_email'], $_SESSION['otp_pending_name'], $otp);
+        // Redirect to OTP verification page
+        header('Location: verify_email_otp.php');
+        exit;
 
 
         $_SESSION['pending_user_id'] =
@@ -411,7 +424,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <link
     rel="stylesheet"
-    href="style.css"
+    href="style.css?v=20261012"
 >
 
 </head>
@@ -419,7 +432,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <body class="auth-page">
 
-<main class="card auth-card">
+<main class="card auth-card auth-narrow">
 
 <a class="brand-mark" href="login.php" aria-label="Secure Health home">SH</a>
 <p class="eyebrow">SECURE HEALTH</p>
@@ -457,6 +470,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php if ($signupNotice): ?>
 <div class="alert info">
 <?= e($signupNotice) ?>
+</div>
+<?php endif; ?>
+
+<?php if ($passwordResetNotice): ?>
+<div class="alert info">
+<?= e($passwordResetNotice) ?>
 </div>
 <?php endif; ?>
 
@@ -518,11 +537,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Password
 </label>
 
-<input
-    type="password"
-    name="password"
-    required
->
+<div class="password-input-wrap">
+    <input
+        id="login_password"
+        type="password"
+        name="password"
+        required
+        autocomplete="current-password"
+    >
+    <button type="button" class="password-visibility-toggle" aria-label="Show password" aria-pressed="false" title="Show password" data-targets="login_password">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+            <path class="password-eye-slash" d="m4 4 16 16"></path>
+        </svg>
+    </button>
+</div>
 
 
 <button type="submit">
@@ -532,6 +562,22 @@ Continue
 </button>
 
 </form>
+<script>
+    document.querySelectorAll('.password-visibility-toggle').forEach(function (toggle) {
+        toggle.addEventListener('click', function () {
+            const field = document.getElementById(toggle.dataset.targets);
+            if (!field) return;
+
+            const shouldShow = toggle.getAttribute('aria-pressed') !== 'true';
+            field.type = shouldShow ? 'text' : 'password';
+            toggle.setAttribute('aria-pressed', String(shouldShow));
+            toggle.setAttribute('aria-label', shouldShow ? 'Hide password' : 'Show password');
+            toggle.setAttribute('title', shouldShow ? 'Hide password' : 'Show password');
+        });
+    });
+</script>
+
+<p class="auth-switch"><a href="forgot_password.php">Forgot password?</a></p>
 
 <a class="button-link button-secondary" href="signup.php">Create patient account</a>
 

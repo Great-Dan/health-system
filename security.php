@@ -361,7 +361,7 @@ function require_login(): void
 
     ) {
 
-        header('Location: /secure_health_system/login.php');
+        header('Location: login.php');
 
         exit;
 
@@ -393,7 +393,7 @@ function require_login(): void
         logout_user('session_timeout');
 
         header(
-            'Location: /secure_health_system/login.php?expired=1'
+            'Location: login.php?expired=1'
         );
 
         exit;

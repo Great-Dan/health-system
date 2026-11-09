@@ -8,10 +8,24 @@ declare(strict_types=1);
 |--------------------------------------------------------------------------
 */
 
-const DB_HOST = '127.0.0.1';
-const DB_NAME = 'secure_health_system';
-const DB_USER = 'root';
-const DB_PASS = '';
+if (!defined('DB_HOST')) {
+    define('DB_HOST', (string)(getenv('DB_HOST') ?: '127.0.0.1'));
+}
+if (!defined('DB_PORT')) {
+    define('DB_PORT', (int)(getenv('DB_PORT') ?: 3306));
+}
+if (!defined('DB_NAME')) {
+    define('DB_NAME', (string)(getenv('DB_NAME') ?: 'secure_health_system'));
+}
+if (!defined('DB_USER')) {
+    define('DB_USER', (string)(getenv('DB_USER') ?: 'root'));
+}
+if (!defined('DB_PASS')) {
+    define('DB_PASS', (string)(getenv('DB_PASS') !== false ? getenv('DB_PASS') : ''));
+}
+if (!defined('DB_SSL')) {
+    define('DB_SSL', (bool)(getenv('DB_SSL') !== false ? (getenv('DB_SSL') === 'true' || getenv('DB_SSL') === '1') : false));
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -34,12 +48,11 @@ if (!defined('REQUIRE_2FA')) {
 |--------------------------------------------------------------------------
 | PASSWORD PEPPER
 |--------------------------------------------------------------------------
-|
-| Change this value to a strong, unique secret string before using the system.
-|
 */
 
-const APP_PEPPER = 'CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_KEY';
+if (!defined('APP_PEPPER')) {
+    define('APP_PEPPER', (string)(getenv('APP_PEPPER') ?: 'CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_123456789'));
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -58,32 +71,32 @@ if (!defined('SESSION_TIMEOUT')) {
 */
 
 if (!defined('BREVO_API_KEY')) {
-    define('BREVO_API_KEY', (string)($systemConfig['brevo_api_key'] ?? ''));
+    define('BREVO_API_KEY', (string)(getenv('BREVO_API_KEY') ?: ($systemConfig['brevo_api_key'] ?? '')));
 }
 if (!defined('RESEND_API_KEY')) {
-    define('RESEND_API_KEY', (string)($systemConfig['resend_api_key'] ?? ''));
+    define('RESEND_API_KEY', (string)(getenv('RESEND_API_KEY') ?: ($systemConfig['resend_api_key'] ?? '')));
 }
 if (!defined('SENDGRID_API_KEY')) {
-    define('SENDGRID_API_KEY', (string)($systemConfig['sendgrid_api_key'] ?? ''));
+    define('SENDGRID_API_KEY', (string)(getenv('SENDGRID_API_KEY') ?: ($systemConfig['sendgrid_api_key'] ?? '')));
 }
 
 if (!defined('SMTP_HOST')) {
-    define('SMTP_HOST', (string)($systemConfig['smtp_host'] ?? 'smtp.gmail.com'));
+    define('SMTP_HOST', (string)(getenv('SMTP_HOST') ?: ($systemConfig['smtp_host'] ?? 'smtp.gmail.com')));
 }
 if (!defined('SMTP_PORT')) {
-    define('SMTP_PORT', (int)($systemConfig['smtp_port'] ?? 587));
+    define('SMTP_PORT', (int)(getenv('SMTP_PORT') ?: ($systemConfig['smtp_port'] ?? 587)));
 }
 if (!defined('SMTP_USER')) {
-    define('SMTP_USER', (string)($systemConfig['smtp_user'] ?? ''));
+    define('SMTP_USER', (string)(getenv('SMTP_USER') ?: ($systemConfig['smtp_user'] ?? '')));
 }
 if (!defined('SMTP_PASS')) {
-    define('SMTP_PASS', (string)($systemConfig['smtp_pass'] ?? ''));
+    define('SMTP_PASS', (string)(getenv('SMTP_PASS') ?: ($systemConfig['smtp_pass'] ?? '')));
 }
 if (!defined('SMTP_FROM_EMAIL')) {
-    define('SMTP_FROM_EMAIL', (string)($systemConfig['smtp_from_email'] ?? ($systemConfig['mail_from_email'] ?? '')));
+    define('SMTP_FROM_EMAIL', (string)(getenv('SMTP_FROM_EMAIL') ?: ($systemConfig['smtp_from_email'] ?? ($systemConfig['mail_from_email'] ?? ''))));
 }
 if (!defined('SMTP_FROM_NAME')) {
-    define('SMTP_FROM_NAME', (string)($systemConfig['smtp_from_name'] ?? ($systemConfig['mail_from_name'] ?? 'Secure Health System')));
+    define('SMTP_FROM_NAME', (string)(getenv('SMTP_FROM_NAME') ?: ($systemConfig['smtp_from_name'] ?? ($systemConfig['mail_from_name'] ?? 'Secure Health System'))));
 }
 
 /*
@@ -101,7 +114,7 @@ if (!defined('LOCKOUT_MINUTES')) {
 }
 
 if (!defined('BACKUP_DESTINATION_URL')) {
-    define('BACKUP_DESTINATION_URL', (string)($systemConfig['backup_destination_url'] ?? ''));
+    define('BACKUP_DESTINATION_URL', (string)(getenv('BACKUP_DESTINATION_URL') ?: ($systemConfig['backup_destination_url'] ?? '')));
 }
 
 /*

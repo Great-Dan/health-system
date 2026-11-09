@@ -2,50 +2,40 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/config.php';
-
+if (file_exists(__DIR__ . '/config.php')) {
+    require_once __DIR__ . '/config.php';
+} elseif (file_exists(__DIR__ . '/config.example.php')) {
+    require_once __DIR__ . '/config.example.php';
+}
 
 function db(): PDO
 {
     static $pdo = null;
 
-
     if ($pdo instanceof PDO) {
-
         return $pdo;
-
     }
 
+    $host = getenv('DB_HOST') ?: (defined('DB_HOST') ? DB_HOST : '127.0.0.1');
+    $port = getenv('DB_PORT') ?: (defined('DB_PORT') ? (string)DB_PORT : '3306');
+    $name = getenv('DB_NAME') ?: (defined('DB_NAME') ? DB_NAME : 'secure_health_system');
+    $user = getenv('DB_USER') ?: (defined('DB_USER') ? DB_USER : 'root');
+    $pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : (defined('DB_PASS') ? DB_PASS : '');
+    $ssl  = getenv('DB_SSL') ?: (defined('DB_SSL') ? DB_SSL : false);
 
-    $dsn =
-        'mysql:host=' . DB_HOST .
-        ';dbname=' . DB_NAME .
-        ';charset=utf8mb4';
+    $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
 
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ];
 
-    $pdo = new PDO(
+    if ($ssl && ($ssl === true || $ssl === 'true' || $ssl === '1')) {
+        $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    }
 
-        $dsn,
-
-        DB_USER,
-
-        DB_PASS,
-
-        [
-
-            PDO::ATTR_ERRMODE =>
-                PDO::ERRMODE_EXCEPTION,
-
-            PDO::ATTR_DEFAULT_FETCH_MODE =>
-                PDO::FETCH_ASSOC,
-
-            PDO::ATTR_EMULATE_PREPARES =>
-                false
-
-        ]
-
-    );
-
+    $pdo = new PDO($dsn, $user, $pass, $options);
 
     return $pdo;
 }

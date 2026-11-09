@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Secure Health",
+    "slug": "secure-health-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "securehealth",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.securehealth.mobile"
+    },
+    "android": {
+      "package": "com.securehealth.mobile"
+    }
+  }
+}

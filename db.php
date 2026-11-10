@@ -47,6 +47,19 @@ function db(): PDO
     ];
 
     if ($ssl && ($ssl === true || $ssl === 'true' || $ssl === '1')) {
+        $caPaths = [
+            '/etc/ssl/certs/ca-certificates.crt',
+            '/etc/pki/tls/certs/ca-bundle.crt',
+            '/etc/ssl/cert.pem',
+            'C:/xampp/apache/bin/curl-ca-bundle.crt',
+            'C:/xampp/php/extras/ssl/cacert.pem',
+        ];
+        foreach ($caPaths as $ca) {
+            if (file_exists($ca)) {
+                $options[PDO::MYSQL_ATTR_SSL_CA] = $ca;
+                break;
+            }
+        }
         $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;
     }
 

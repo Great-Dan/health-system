@@ -41,6 +41,24 @@ if (!defined('MAIL_FROM_NAME')) {
  * Retrieve Mail API & SMTP configuration from constants, environment variables,
  * or system_config.json.
  */
+function is_local_development_environment(): bool
+{
+    if (getenv('VERCEL') !== false) {
+        return false;
+    }
+
+    $serverName = strtolower((string)($_SERVER['SERVER_NAME'] ?? ''));
+    $host = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
+    $env = strtolower((string)(getenv('APP_ENV') ?: ($_SERVER['APP_ENV'] ?? '')));
+
+    if ($env !== '') {
+        return in_array($env, ['local', 'development'], true);
+    }
+
+    return in_array($serverName, ['localhost', '127.0.0.1', '::1'], true)
+        || in_array($host, ['localhost', '127.0.0.1', '::1'], true);
+}
+
 function get_mail_delivery_settings(): array
 {
     $sysConfig = [];
@@ -126,7 +144,8 @@ function send_via_brevo_api(
             'content-type: application/json'
         ],
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 12,
+        CURLOPT_TIMEOUT => 5,
+        CURLOPT_CONNECTTIMEOUT => 3,
         CURLOPT_SSL_VERIFYPEER => true,
     ]);
 
@@ -176,7 +195,8 @@ function send_via_resend_api(
             'Content-Type: application/json'
         ],
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 12,
+        CURLOPT_TIMEOUT => 5,
+        CURLOPT_CONNECTTIMEOUT => 3,
         CURLOPT_SSL_VERIFYPEER => true,
     ]);
 
@@ -229,7 +249,8 @@ function send_via_sendgrid_api(
             'Content-Type: application/json'
         ],
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 12,
+        CURLOPT_TIMEOUT => 5,
+        CURLOPT_CONNECTTIMEOUT => 3,
         CURLOPT_SSL_VERIFYPEER => true,
     ]);
 
@@ -499,6 +520,17 @@ HTML;
 
     $settings = get_mail_delivery_settings();
 
+    // ── LOCAL DEV: skip all external APIs for instant OTP testing ───────────
+    if (is_local_development_environment()) {
+        $logDir  = __DIR__ . '/backups';
+        $logFile = $logDir . '/otp_dev_log.txt';
+        @mkdir($logDir, 0700, true);
+        $entry = date('[Y-m-d H:i:s]') . " OTP for {$toEmail}: {$otp}\n";
+        @file_put_contents($logFile, $entry, FILE_APPEND | LOCK_EX);
+        $_SESSION['_dev_otp'] = $otp;
+        return false;
+    }
+
     // ── 1. BREVO REST API (Recommended for InfinityFree) ─────────────────────
     if ($settings['brevo_key'] !== '') {
         $from = $settings['from_email'];
@@ -622,12 +654,16 @@ HTML;
     }
 
     // ── 6. LOCAL DEV MODE FALLBACK ───────────────────────────────────────────
-    $logDir  = __DIR__ . '/backups';
-    $logFile = $logDir . '/otp_dev_log.txt';
-    @mkdir($logDir, 0700, true);
-    $entry = date('[Y-m-d H:i:s]') . " OTP for {$toEmail}: {$otp}\n";
-    @file_put_contents($logFile, $entry, FILE_APPEND | LOCK_EX);
-    $_SESSION['_dev_otp'] = $otp;
+    // Keep the OTP visible in non-production environments only.
+    if (is_local_development_environment()) {
+        $logDir  = __DIR__ . '/backups';
+        $logFile = $logDir . '/otp_dev_log.txt';
+        @mkdir($logDir, 0700, true);
+        $entry = date('[Y-m-d H:i:s]') . " OTP for {$toEmail}: {$otp}\n";
+        @file_put_contents($logFile, $entry, FILE_APPEND | LOCK_EX);
+        $_SESSION['_dev_otp'] = $otp;
+        return false;
+    }
 
     return false;
 }

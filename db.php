@@ -16,6 +16,21 @@ function db(): PDO
         return $pdo;
     }
 
+    if (getenv('VERCEL') !== false) {
+        $missing = [];
+        foreach (['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS'] as $requiredSetting) {
+            $value = getenv($requiredSetting);
+            if ($value === false || trim($value) === '') {
+                $missing[] = $requiredSetting;
+            }
+        }
+
+        if ($missing !== []) {
+            error_log('Database configuration missing on Vercel: ' . implode(', ', $missing));
+            throw new RuntimeException('The database is not configured for this deployment.');
+        }
+    }
+
     $host = getenv('DB_HOST') ?: (defined('DB_HOST') ? DB_HOST : '127.0.0.1');
     $port = getenv('DB_PORT') ?: (defined('DB_PORT') ? (string)DB_PORT : '3306');
     $name = getenv('DB_NAME') ?: (defined('DB_NAME') ? DB_NAME : 'secure_health_system');
@@ -32,7 +47,7 @@ function db(): PDO
     ];
 
     if ($ssl && ($ssl === true || $ssl === 'true' || $ssl === '1')) {
-        $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+        $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;
     }
 
     $pdo = new PDO($dsn, $user, $pass, $options);

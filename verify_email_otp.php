@@ -21,7 +21,11 @@ require_once __DIR__ . '/security.php';
 require_once __DIR__ . '/email_otp.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
+    if (function_exists('init_session')) {
+        init_session();
+    } else {
+        session_start();
+    }
 }
 
 // ── Guard: must arrive here from the login flow ────────────────────────────

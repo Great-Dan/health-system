@@ -191,4 +191,15 @@ CREATE TABLE IF NOT EXISTS `system_backups` (
   KEY `idx_system_backups_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+-- Sessions (Database-backed serverless session store)
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sessions` (
+  `id` varchar(128) NOT NULL,
+  `data` mediumtext NOT NULL,
+  `last_activity` int(10) UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_last_activity` (`last_activity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

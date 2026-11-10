@@ -131,13 +131,5 @@ date_default_timezone_set((string)($systemConfig['timezone'] ?? 'Africa/Accra'))
 |--------------------------------------------------------------------------
 */
 
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path' => '/',
-        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-        'httponly' => true,
-        'samesite' => 'Lax'
-    ]);
-    session_start();
-}
+require_once __DIR__ . '/session_handler.php';
+init_session();

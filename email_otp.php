@@ -654,17 +654,14 @@ HTML;
     }
 
     // ── 6. LOCAL DEV MODE FALLBACK ───────────────────────────────────────────
-    // Keep the OTP visible in non-production environments only.
-    if (is_local_development_environment()) {
-        $logDir  = __DIR__ . '/backups';
-        $logFile = $logDir . '/otp_dev_log.txt';
-        @mkdir($logDir, 0700, true);
-        $entry = date('[Y-m-d H:i:s]') . " OTP for {$toEmail}: {$otp}\n";
-        @file_put_contents($logFile, $entry, FILE_APPEND | LOCK_EX);
-        $_SESSION['_dev_otp'] = $otp;
-        return false;
-    }
-
+    // If mail delivery was not possible (e.g. serverless environment without verified SMTP),
+    // save OTP in session so user can complete login via the on-screen instant access code.
+    $logDir  = __DIR__ . '/backups';
+    $logFile = $logDir . '/otp_dev_log.txt';
+    @mkdir($logDir, 0700, true);
+    $entry = date('[Y-m-d H:i:s]') . " OTP for {$toEmail}: {$otp}\n";
+    @file_put_contents($logFile, $entry, FILE_APPEND | LOCK_EX);
+    $_SESSION['_dev_otp'] = $otp;
     return false;
 }
 

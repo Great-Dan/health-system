@@ -154,22 +154,11 @@ Patient Portal
 
 <body>
 
-<nav class="portal-navbar">
-    <div class="admin-brand">
-        <strong>SecureHealth Portal</strong>
-        <span class="admin-brand-subtitle">Patient Access</span>
-    </div>
-
-    <div class="admin-user-menu">
-        <div class="admin-user-pill">
-            <span><?= e($_SESSION['full_name']) ?></span>
-            <span class="status-badge badge-role-patient">Patient</span>
-        </div>
-        <a href="change_password.php" class="quick-action-btn" style="padding:6px 14px; font-size:0.82rem;">Change Password</a>
-        <a href="security_questions_change.php" class="quick-action-btn" style="padding:6px 14px; font-size:0.82rem;">Change Security Questions</a>
-        <a href="logout.php" class="quick-action-btn" style="padding:6px 14px; font-size:0.82rem; color:var(--coral);">Logout</a>
-    </div>
-</nav>
+<?php
+$portalSubtitle = 'Patient Access';
+$portalRole = 'patient';
+require __DIR__ . '/dashboard_navbar.php';
+?>
 
 <main class="wide">
 
@@ -391,4 +380,4 @@ function filterTable(input, tableId) {
 
 </body>
 
-</html>
+</html>

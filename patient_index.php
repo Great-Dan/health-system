@@ -147,7 +147,7 @@ Patient Portal
 
 <link
     rel="stylesheet"
-    href="style.css?v=20261018_mobile1"
+    href="style.css?v=20261110_v3"
 >
 
 </head>
